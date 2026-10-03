@@ -15,6 +15,8 @@ kernel or the boot image. Every fix can be removed again.
 | WiFi is "on" after boot but finds no networks | connman powers WiFi while Android's `wlan_prov` still holds the chip in reset, and never retries | [fixes/wifi](fixes/wifi/) | proven by reboot |
 | Saved WiFi networks vanish after an update | the driver shows a wrong address first, and connman files networks under the address it sees first | [fixes/wifi](fixes/wifi/) | proven by reboot |
 | The screen is too bright at the lowest setting, and the slider barely does anything | the kernel squeezes the backlight into 20 % to 64 % duty, and automatic adjustment squeezes the slider further | [fixes/brightness](fixes/brightness/) | proven by reboot |
+| The brightness jumps on every touch | Intel's `coreu` daemon re-sets the backlight ten times on every picture change (DPST) | [fixes/brightness](fixes/brightness/) | proven by trace and by eye |
+| Some boots have no WiFi and no GPS, or hang on the logo | the tablet's own zram units form an ordering loop, and systemd breaks it differently from boot to boot | [fixes/boot](fixes/boot/) | loop gone, one boot checked |
 | GPS never gets a fix once the tablet has slept | the location provider stamps injected time with the wrong clock, and the GPS daemon restarts every 54 s | [fixes/gps](fixes/gps/) | proven after standby |
 | Bluetooth never comes up | connman keeps it soft-blocked | [fixes/bluetooth](fixes/bluetooth/) | works |
 | The update to 4.6 seems impossible | the UI updater is a dead end on this device | [docs/update-to-4.6.0.15.md](docs/update-to-4.6.0.15.md) | done once, seven hops |

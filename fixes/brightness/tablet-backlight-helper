@@ -19,18 +19,27 @@ The driver still writes its own level when the panel is switched on, so while
 the display is on the register is compared with the wanted value twice a
 second and corrected.
 
+DPST has to be off. Intel's Android-side daemon "coreu" runs DPST, the
+content-adaptive backlight: on every change of the picture it makes the driver
+re-set the backlight in a burst of ten steps, 50 ms apart. With the remap in
+place that shows as the brightness bumping up ten times whenever the screen is
+used. The helper stops coreu through Android's init when it finds it running.
+
 Config: /etc/tablet-backlight.conf, key=value. Reload with SIGHUP.
   floor    on-time divisor at the lowest setting (0xff = darkest)
   ceiling  on-time divisor at the highest setting (0x5d = the driver's own
            maximum; do not go lower than that without thinking about heat)
   gamma    curve between them; 1.0 is linear in duty, 2.2 feels even to the eye
+  stop_dpst  1 (default) stops the coreu daemon, 0 leaves it alone
 """
 import ctypes
 import ctypes.util
 import os
 import select
 import signal
+import subprocess
 import sys
+import time
 
 WATCH = sys.argv[1] if len(sys.argv) > 1 else "/run/tablet-backlight/brightness"
 CONF = "/etc/tablet-backlight.conf"
@@ -48,7 +57,7 @@ def log(msg):
 
 
 def load_conf():
-    cfg.update(floor=0xff, ceiling=0x5d, gamma=2.2)
+    cfg.update(floor=0xff, ceiling=0x5d, gamma=2.2, stop_dpst=1)
     try:
         for line in open(CONF):
             line = line.split("#")[0].strip()
@@ -59,6 +68,8 @@ def load_conf():
                 cfg[key] = max(0, min(255, int(val, 0)))
             elif key == "gamma":
                 cfg[key] = max(0.2, min(5.0, float(val)))
+            elif key == "stop_dpst":
+                cfg[key] = int(val, 0)
     except OSError:
         pass
     if cfg["ceiling"] > cfg["floor"]:
@@ -90,12 +101,34 @@ def read_reg():
         return None
 
 
+last_dpst_check = 0.0
+
+
+def stop_dpst():
+    """Stop coreu if Android's init says it is running. At most every 5 s."""
+    global last_dpst_check
+    if not cfg["stop_dpst"] or time.monotonic() - last_dpst_check < 5:
+        return
+    last_dpst_check = time.monotonic()
+    try:
+        state = subprocess.run(["/usr/bin/getprop", "init.svc.coreu"], stdout=subprocess.PIPE,
+                               timeout=5).stdout.decode().strip()
+        if state == "running":
+            subprocess.run(["/usr/bin/setprop", "ctl.stop", "coreu"], timeout=5)
+            log("coreu was running, stopped it (DPST off)")
+    except (OSError, subprocess.SubprocessError) as e:
+        log("could not check coreu: %s" % e)
+
+
 def apply(divisor):
     reg = read_reg()
     if reg is None or not reg & 0x80000000:
         return          # PWM disabled: the panel is off, leave it to the driver
     if reg & 0xff == divisor:
         return
+    # Somebody else changed the register. Besides the driver's replay on
+    # unblank, the usual somebody is DPST.
+    stop_dpst()
     # keep the frequency bits, set the new on-time, set bit 30 so it latches
     val = (reg & 0x3fffff00) | 0x80000000 | 0x40000000 | divisor
     try:
@@ -120,8 +153,13 @@ def main():
         log("inotify on %s failed, errno %d" % (WATCH, ctypes.get_errno()))
         return 1
     log("watching %s" % WATCH)
+    started = time.monotonic()
     raw = read_raw()
     while True:
+        # coreu starts later in the boot than this helper. Look for it actively
+        # for the first three minutes; after that a register mismatch triggers it.
+        if time.monotonic() - started < 180:
+            stop_dpst()
         if reload_wanted:
             reload_wanted = False
             load_conf()

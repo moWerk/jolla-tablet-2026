@@ -64,7 +64,7 @@ is 2.3 GB in total. The update works anyway, and it frees space.
 **6. A logo that stays forever is usually not a hang.** If the backlight dims
 and brightens when you press the power button, the system is up and only the
 home screen is missing. Force one reboot: hold Volume Down and Power for more
-than 10 seconds. See [open-issues.md](open-issues.md) for the suspected cause.
+than 10 seconds. See [fixes/boot](../fixes/boot/) for the suspected cause.
 
 ## Recovery menu
 

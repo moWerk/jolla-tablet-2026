@@ -33,6 +33,15 @@ visible up to the driver's own maximum.
 
 Automatic brightness is switched off, because its table assumes the old range.
 
+**DPST is switched off too.** The tablet runs an Intel daemon from the Android
+side, `coreu`. It does DPST, a content-adaptive backlight: whenever the picture
+changes, it makes the display driver set the backlight again, in a burst of ten
+steps 50 ms apart. Each of those steps puts the backlight back at the driver's
+own level. With the wider range that shows as the brightness jumping up ten
+times on every touch. A kernel function trace showed all of those writes coming
+from `coreu`. The helper stops `coreu` through Android's init and keeps it
+stopped. Set `stop_dpst=0` in the config to leave it running.
+
 | slider | before (duty) | after (duty) |
 |---|---|---|
 | lowest | 23 % | about 0.4 % |
@@ -79,6 +88,7 @@ daylight, it is not: raise the slider.
     floor=0xff      # the lowest slider position. 0xff is the darkest.
     ceiling=0x5d    # the highest. 0x5d is the kernel driver's own maximum.
     gamma=2.2       # the curve in between. 1.0 is linear.
+    stop_dpst=1     # stop the coreu daemon. 0 leaves it running.
 
 After a change: `devel-su systemctl reload tablet-backlight`
 
@@ -109,5 +119,8 @@ Then reboot.
 - The helper is a Python script and uses about 8 MB of memory.
 - If the helper is not running, the screen stays at the driver's minimum, which
   is the old lowest setting. The tablet stays usable.
+- With `coreu` stopped there is no DPST. On the stock range DPST lowers the
+  backlight for dark pictures; what that saved has not been measured. `coreu`
+  also offers an HDCP interface, which nothing on Sailfish OS uses.
 - Automatic brightness is off with this fix. The light sensor does respond, so
   an automatic mode built for the new range is possible. It is not done.
