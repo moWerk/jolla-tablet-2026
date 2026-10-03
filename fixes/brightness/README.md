@@ -44,6 +44,27 @@ Automatic brightness is switched off, because its table assumes the old range.
 The "before" column is with automatic brightness on, in room light. Both
 columns are read from the PWM register, not estimated.
 
+## What the backlight costs
+
+Measured on battery with the home screen showing, WiFi on, 15 samples per
+level. The fuel gauge reports in 16 mA steps, so read these as rough figures.
+Runtime is the measured battery capacity (4375 mAh) divided by the current.
+
+| state | PWM duty | current | runtime |
+|---|---|---|---|
+| screen off, tablet awake | | 193 mA | |
+| slider at 1 | 0.4 % | 509 mA | 8.6 h |
+| slider at 25 | 3 % | 510 mA | 8.6 h |
+| slider at 50 | 14 % | 558 mA | 7.8 h |
+| slider at 62, the old lowest | 21 % | 596 mA | 7.3 h |
+| slider at 81, the old highest in room light | 39 % | 674 mA | 6.5 h |
+| slider at 100 | 64 % | 790 mA | 5.5 h |
+
+Switching the screen on costs about 315 mA before the backlight adds anything.
+The backlight then costs about 4.4 mA per percent of duty, up to 280 mA at the
+top. Against the old lowest setting the new low end saves about 90 mA, which is
+1.3 hours more with the screen on.
+
 ## Install
 
     devel-su sh install.sh

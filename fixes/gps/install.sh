@@ -12,7 +12,11 @@ SO=libgeoclue-boottime.so
 
 # geoclue-hybris is setuid root. In that mode the loader only preloads a library
 # given by bare name, from a trusted directory, that carries the setuid bit itself.
-install -o root -g root -m 4755 $SO /usr/lib/$SO
+# Owner first, mode second: changing the owner clears the setuid bit.
+cp $SO /usr/lib/$SO
+chown root:root /usr/lib/$SO
+chmod 4755 /usr/lib/$SO
+[ -u /usr/lib/$SO ] || die "could not set the setuid bit on /usr/lib/$SO. Without it the library is ignored."
 
 U=/usr/lib/systemd/user
 n=0
