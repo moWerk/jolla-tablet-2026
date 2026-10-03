@@ -23,6 +23,10 @@ kernel or the boot image. Every fix can be removed again.
 
 Known and not fixed yet: [docs/open-issues.md](docs/open-issues.md).
 
+If you came here from a forum thread: [docs/forum-threads.md](docs/forum-threads.md)
+lists the tablet threads on forum.sailfishos.org next to what this repository
+does about each.
+
 ## How to use it
 
 Developer mode has to be on. Get the files onto the tablet, then as root:
