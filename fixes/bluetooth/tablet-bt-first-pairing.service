@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+[Unit]
+Description=Jolla Tablet: load an empty Bluetooth key list when nothing is paired
+After=bluetooth.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/tablet-bt-first-pairing 0

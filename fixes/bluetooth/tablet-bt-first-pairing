@@ -1,0 +1,90 @@
+#!/usr/bin/python3
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+"""Jolla Tablet: make the first Bluetooth pairing possible.
+
+The tablet's 3.10 kernel answers the controller's Link Key Request only after
+a key list has been loaded into it (the management command Load Link Keys sets
+a flag). The BlueZ of Sailfish OS 4.6 loads a key list only when it already
+has a stored bond. With nothing paired, nothing is loaded, the kernel ignores
+the request, and every pairing times out.
+
+This sends an empty key list when the adapter appears and no bond is stored.
+With a stored bond it does nothing: bluetoothd loads the real keys itself, and
+an empty list would wipe them from the kernel.
+"""
+import ctypes
+import glob
+import socket
+import struct
+import sys
+import time
+
+AF_BLUETOOTH = 31
+BTPROTO_HCI = 1
+HCI_DEV_NONE = 0xffff
+HCI_CHANNEL_CONTROL = 3
+MGMT_OP_LOAD_LINK_KEYS = 0x0012
+MGMT_EV_CMD_COMPLETE = 0x0001
+MGMT_EV_CMD_STATUS = 0x0002
+
+
+def stored_link_keys():
+    for path in glob.glob("/var/lib/bluetooth/*/*/info"):
+        try:
+            if "[LinkKey]" in open(path).read():
+                return True
+        except OSError:
+            pass
+    return False
+
+
+def load_empty_keys(index):
+    """Returns the kernel's status byte (0 = success), or None on no reply."""
+    s = socket.socket(AF_BLUETOOTH, socket.SOCK_RAW, BTPROTO_HCI)
+    # Python cannot bind an HCI socket to the control channel by itself.
+    addr = struct.pack("<HHH", AF_BLUETOOTH, HCI_DEV_NONE, HCI_CHANNEL_CONTROL)
+    libc = ctypes.CDLL("libc.so.6", use_errno=True)
+    if libc.bind(s.fileno(), addr, len(addr)) != 0:
+        raise OSError(ctypes.get_errno(), "bind to the management channel failed")
+    params = struct.pack("<BH", 0, 0)            # debug_keys = 0, key_count = 0
+    s.send(struct.pack("<HHH", MGMT_OP_LOAD_LINK_KEYS, index, len(params)) + params)
+    s.settimeout(3)
+    try:
+        for _ in range(20):
+            data = s.recv(1024)
+            event, _idx, _len = struct.unpack_from("<HHH", data)
+            if event in (MGMT_EV_CMD_COMPLETE, MGMT_EV_CMD_STATUS):
+                opcode, status = struct.unpack_from("<HB", data, 6)
+                if opcode == MGMT_OP_LOAD_LINK_KEYS:
+                    return status
+    except socket.timeout:
+        pass
+    finally:
+        s.close()
+    return None
+
+
+def main():
+    index = int(sys.argv[1]) if len(sys.argv) > 1 else 0
+    # bluetoothd sets the adapter up first; give it a moment, then retry while
+    # the controller is still initialising.
+    for attempt in range(10):
+        time.sleep(2 if attempt == 0 else 1)
+        if stored_link_keys():
+            print("a bond is stored, bluetoothd loads the keys itself; nothing to do")
+            return 0
+        try:
+            status = load_empty_keys(index)
+        except OSError as e:
+            print("attempt %d: %s" % (attempt + 1, e))
+            continue
+        if status == 0:
+            print("empty key list loaded into hci%d, pairing is possible now" % index)
+            return 0
+        print("attempt %d: kernel status %s" % (attempt + 1, status))
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

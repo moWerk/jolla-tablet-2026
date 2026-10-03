@@ -1,0 +1,6 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Jolla Tablet: every time the Bluetooth adapter appears (boot, or Bluetooth
+# switched off and on), start the service that makes a first pairing possible.
+ACTION=="add", SUBSYSTEM=="bluetooth", KERNEL=="hci0", TAG+="systemd", ENV{SYSTEMD_WANTS}+="tablet-bt-first-pairing.service"
