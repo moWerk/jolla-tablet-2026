@@ -35,7 +35,7 @@ Cause, numbers and how to tune it: [fixes/brightness](fixes/brightness/).
 | Some boots have no WiFi and no GPS, or hang on the logo; no swap | the tablet's own zram service is ordered into a loop, and systemd breaks it differently from boot to boot | [fixes/boot](fixes/boot/) | loop gone, swap works |
 | GPS never gets a fix once the tablet has slept | the location provider stamps injected time with the wrong clock, and the GPS daemon restarts every 54 s | [fixes/gps](fixes/gps/) | proven after standby |
 | Bluetooth never comes up, and then nothing can be paired | connman keeps it soft-blocked; the old kernel only answers a pairing once a key list has been loaded, and BlueZ loads none while nothing is paired | [fixes/bluetooth](fixes/bluetooth/) | paired from zero, audio plays, tethering works |
-| The update to 4.6 seems impossible | the UI updater is a dead end on this device | [docs/update-to-4.6.0.15.md](docs/update-to-4.6.0.15.md) | done once, seven hops |
+| The update to 4.6 seems impossible | the UI updater is a dead end on this device | [docs/update-to-4.6.0.15.md](docs/update-to-4.6.0.15.md) | done once, six hops |
 
 Known and not fixed yet: [docs/open-issues.md](docs/open-issues.md).
 
