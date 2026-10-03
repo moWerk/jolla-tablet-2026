@@ -43,9 +43,14 @@ Then reboot.
 
 After the reboot WiFi should connect by itself within a minute. As root:
 
-    journalctl -u connman | grep wifi-mirror
+    systemctl status connman | grep ExecStartPre
 
-shows the addresses it handled and how many entries it wrote.
+must show the mirror script with `status=0/SUCCESS`.
+
+    ls ~/.local/share/system/privileged/connman/
+
+as the normal user's home: every saved network appears once per address, as
+`wifi_<address>_<network>_managed_psk`.
 
     journalctl -u wifi-boot-kick
 
@@ -68,6 +73,11 @@ Fault 2: two boots three minutes apart registered `wlan0` once with the real
 address and once with the shifted one. A copied network with the old header
 showed `Favorite: false, AutoConnect: false`. With the header corrected and
 connman restarted it showed `true` for both.
+
+The fix, on a boot that came up with the shifted address: a network saved
+under the real address only was present under the shifted one after the
+reboot, connman listed every saved network as known, and WiFi connected
+without a touch.
 
 An earlier version of this fix set the real address with a udev rule when
 `wlan0` appeared. On a boot with that rule in place connman still filed its
