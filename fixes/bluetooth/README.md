@@ -47,6 +47,25 @@ input device appears when a headset connects, named after the headset with
 Whether a button then pauses the music depends on the player. The Media app
 can be controlled this way. The browser cannot.
 
+## Internet through a phone (Bluetooth tethering)
+
+Not a fault, once pairing works. connman can join a phone's Bluetooth network
+by itself. Pair a phone that has Bluetooth tethering switched on, then:
+
+    devel-su bt-tether connect
+
+The tablet gets an address from the phone, a default route through it, and
+DNS for every app. `bt-tether disconnect` ends it, `bt-tether status` shows
+the state.
+
+Building the link by hand below connman, as the old BlueZ scripts do, brings
+the interface up without DNS for apps. That is what the forum thread on this
+ran into.
+
+While it is connected the default route goes through the phone, even with
+WiFi up. `bt-tether auto on` marks the phone for automatic connection; at
+home that would use the phone's mobile data. It is off unless you switch it on.
+
 ## Install
 
     devel-su sh install.sh
@@ -83,6 +102,12 @@ after a restart. With it back in place, one did.
 
 With the fix installed on a tablet that had nothing paired, the earbuds
 paired from Settings on the first attempt.
+
+Tethering, with a phone running LineageOS: with WiFi switched off the tablet
+held 192.168.44.28 on `bnep0`, three of three pings were answered, the system
+resolver resolved names, and an https request by name returned 200 as root
+and as the normal user. Whether `auto on` rejoins by itself when the phone
+comes back into range was not tested.
 
 ## Good to know
 

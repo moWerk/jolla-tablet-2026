@@ -1,0 +1,44 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Jolla Tablet: use a phone's Bluetooth tethering.
+#
+# connman can join a phone's Bluetooth network by itself: once the phone is
+# paired and offers tethering, connman lists a service for it. Connecting that
+# service gives the tablet an address, a default route and working DNS for all
+# apps. This is a front end for that service.
+#
+# usage, as root:  bt-tether status | connect | disconnect | auto on | auto off
+C="dbus-send --system --print-reply --dest=net.connman"
+
+services() {
+    $C / net.connman.Manager.GetServices 2>/dev/null | grep -o '/net/connman/service/bluetooth_[0-9A-Fa-f_]*' | sort -u
+}
+prop() {   # service, property
+    $C "$1" net.connman.Service.GetProperties 2>/dev/null | grep -A1 "\"$2\"" | tail -1 | sed 's/.*variant *//; s/^[a-z0-9]* //; s/"//g'
+}
+
+S=$(services | head -1)
+if [ -z "$S" ]; then
+    echo "No Bluetooth network service. Pair a phone that has Bluetooth tethering switched on."
+    exit 1
+fi
+
+case "$1" in
+    connect)
+        $C --reply-timeout=40000 "$S" net.connman.Service.Connect > /dev/null 2>&1; sleep 4 ;;
+    disconnect)
+        $C "$S" net.connman.Service.Disconnect > /dev/null 2>&1; sleep 2 ;;
+    auto)
+        case "$2" in on) v=true ;; off) v=false ;; *) echo "usage: bt-tether auto on|off"; exit 2 ;; esac
+        $C "$S" net.connman.Service.SetProperty string:AutoConnect variant:boolean:$v > /dev/null 2>&1 ;;
+    status|"") ;;
+    *) echo "usage: bt-tether status | connect | disconnect | auto on | auto off"; exit 2 ;;
+esac
+
+echo "phone:      $(prop "$S" Name)"
+echo "state:      $(prop "$S" State)"
+echo "automatic:  $(prop "$S" AutoConnect)"
+echo "interface:  $(/usr/sbin/ip -br addr show bnep0 2>/dev/null | awk '{print $1, $3}')"
+echo "default:    $(/usr/sbin/ip route 2>/dev/null | grep '^default' | head -1)"

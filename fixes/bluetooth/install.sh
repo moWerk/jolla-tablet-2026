@@ -15,6 +15,8 @@ install -m 644 81-tablet-bt-first-pairing.rules /etc/udev/rules.d/81-tablet-bt-f
 systemctl daemon-reload
 /usr/sbin/udevadm control --reload
 
+install -m 755 bt-tether /usr/local/bin/bt-tether
+
 echo "2/3 let bluetoothd receive the buttons of a headset"
 mkdir -p /etc/systemd/system/bluetooth.service.d
 install -m 644 tablet-uinput.conf /etc/systemd/system/bluetooth.service.d/tablet-uinput.conf

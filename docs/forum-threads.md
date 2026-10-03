@@ -19,6 +19,7 @@ tablet. It does not mean the fix was tried on the reporter's tablet.
 | [[Tablet] Can not fully update to 4.5.0.18](https://forum.sailfishos.org/t/14959) (2023) | Packages held back, a bluez4 against bluez5 conflict. Solved in the thread. | Same family as the traps in [update-to-4.6.0.15.md](update-to-4.6.0.15.md). |
 | [Updating tablet 4.4.0.68->4.4.0.72 fails](https://forum.sailfishos.org/t/13677) (2022), [How to shrink /home-partition on Jolla tablet?](https://forum.sailfishos.org/t/18219) (2024) | The root partition is too small for an update. The thread's answer is to resize it. | The test tablet went from 4.0.1.48 to 4.6.0.15 on its 2.3 GB root without resizing, see [update-to-4.6.0.15.md](update-to-4.6.0.15.md). If yours is full, the resize is the way. |
 | [Jolla Tablet, deep sleep issue. Any workarounds?](https://forum.sailfishos.org/t/2257) (2020) | The battery drains with the screen off. | Not reproduced. The test tablet loses about 0.2 % per hour in standby on 4.6.0.15. One known source of load was the GPS daemon restarting every 54 seconds, which [fixes/gps](../fixes/gps/) stops. Whether that is what drained other tablets is not known. |
+| [Bluetooth tethering on SFOS on the receiving end](https://forum.sailfishos.org/t/18757) (2024) | The interface came up once, by hand with a BlueZ script. Names resolved in the terminal only, not in the browser or apps. | Works through connman: [fixes/bluetooth](../fixes/bluetooth/). Pair the phone, then `bt-tether connect`. With WiFi off the tablet had internet and DNS for apps. |
 | Screenshots, mentioned in several threads, for example [this one](https://forum.sailfishos.org/t/14744) | Screenshots come out empty. | Not fixed. See [open-issues.md](open-issues.md). |
 
 ## Related, but a different fault
@@ -26,7 +27,6 @@ tablet. It does not mean the fix was tried on the reporter's tablet.
 | Thread | Reported | Here |
 |---|---|---|
 | [[Jolla Tablet] Gps stopped working since sfos 4.3.0.15](https://forum.sailfishos.org/t/13634) (2022) | GPS dead on 4.3 and 4.4. Fixed by Jolla in 4.5.0. | A different fault. [fixes/gps](../fixes/gps/) is for 4.6.0.15, where GPS works after a boot and stops for good once the tablet has slept. |
-| [Bluetooth tethering on SFOS on the receiving end](https://forum.sailfishos.org/t/18757) (2024) | Tethering over Bluetooth barely works. | Not looked at. [fixes/bluetooth](../fixes/bluetooth/) makes pairing possible, which tethering needs first. |
 
 ## Not reproduced on the test tablet
 
