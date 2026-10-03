@@ -28,14 +28,19 @@ tablet. It does not mean the fix was tried on the reporter's tablet.
 | [[Jolla Tablet] Gps stopped working since sfos 4.3.0.15](https://forum.sailfishos.org/t/13634) (2022) | GPS dead on 4.3 and 4.4. Fixed by Jolla in 4.5.0. | A different fault. [fixes/gps](../fixes/gps/) is for 4.6.0.15, where GPS works after a boot and stops for good once the tablet has slept. |
 | [Bluetooth tethering on SFOS on the receiving end](https://forum.sailfishos.org/t/18757) (2024) | Tethering over Bluetooth barely works. | Not looked at. [fixes/bluetooth](../fixes/bluetooth/) makes pairing possible, which tethering needs first. |
 
+## Not reproduced on the test tablet
+
+| Thread | Reported | Here |
+|---|---|---|
+| [Cannot play mp4 videos on Tablet](https://forum.sailfishos.org/t/5260) (2021, on 4.0.1) | Gallery says "Video could not be loaded". It plays when Gallery is started from the terminal. | On 4.6.0.15 a camera recording plays in Gallery, opened the normal way. On first start Gallery asks for its permissions; until that is accepted nothing opens. |
+| [Jolla Tablet 4.6.0.13 Https Uri Handler error](https://forum.sailfishos.org/t/19922) (2024) | Streaming apps fail with `No URI handler implemented for "https"`. The thread finds the element `souphttpsrc` as root but not as the user. | Only half checked. In a plain shell `gst-inspect-1.0 souphttpsrc` finds the element as root and as the user. No streaming app was tried. |
+
 ## Not looked at
 
 Reported by others. Nothing in this repository addresses these.
 
 | Thread | Reported |
 |---|---|
-| [Jolla Tablet 4.6.0.13 Https Uri Handler error](https://forum.sailfishos.org/t/19922) (2024) | Streaming apps fail with `No URI handler implemented for "https"`. |
-| [Cannot play mp4 videos on Tablet](https://forum.sailfishos.org/t/5260) (2021) | Gallery says "Video could not be loaded". It plays when Gallery is started from the terminal. |
 | [WLAN not found by Jolla Tablet when more than one AP broadcasts the same SSID (mesh)](https://forum.sailfishos.org/t/10412) (2022) | The network is not found in a mesh. |
 | [[4.0.1.45] Extremely strange lock code bug on Jolla Tablet](https://forum.sailfishos.org/t/4808) (2021), ["Too many attempts" Permanently locked device](https://forum.sailfishos.org/t/23096) (2025) | The lock code is rejected and the tablet reports itself permanently locked. |
 | [[Tablet; 4.6.0.13] Deleting the Jolla account almost breaks the tablet](https://forum.sailfishos.org/t/19277) (2024) | After deleting the account and rebooting: stuck on the logo, no WLAN. |
