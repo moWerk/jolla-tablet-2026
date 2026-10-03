@@ -1,0 +1,21 @@
+[Unit]
+Description=Jolla Tablet backlight remap below the i915 duty floor
+# No default dependencies: mce starts very early, before basic.target. With the
+# defaults this unit would be ordered after basic.target and before mce at the
+# same time, and systemd resolved that on 2026-10-03 by never starting mce.
+DefaultDependencies=no
+After=local-fs.target
+Before=mce.service shutdown.target
+Conflicts=shutdown.target
+ConditionPathExists=/sys/bus/platform/devices/80860F09:00/test_write
+
+[Service]
+Type=simple
+ExecStartPre=/usr/local/bin/tablet-backlight-mount
+ExecStart=/usr/bin/python3 /usr/local/bin/tablet-backlight-helper
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

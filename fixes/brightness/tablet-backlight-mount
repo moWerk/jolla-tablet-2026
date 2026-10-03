@@ -1,0 +1,16 @@
+#!/bin/sh
+# Jolla Tablet: put a plain file over the backlight's brightness attribute so
+# that mce writes there and tablet-backlight-helper decides what the PWM does.
+# Must run before mce opens the file. Idempotent.
+BL=$(readlink -f /sys/class/backlight/intel_backlight)
+D=/run/tablet-backlight
+[ -e "$BL/brightness" ] || { echo "no intel_backlight, nothing to do"; exit 0; }
+grep -q " $BL/brightness " /proc/mounts && exit 0
+mkdir -p $D
+cat "$BL/brightness" > $D/brightness 2>/dev/null || echo 128 > $D/brightness
+chmod 644 $D/brightness
+# The driver replays its own last level whenever the panel is switched on.
+# Leave that at its minimum (20 % duty): visible if the helper is not running,
+# and the smallest possible flash before the helper corrects it.
+echo 0 > "$BL/brightness"
+mount -o bind $D/brightness "$BL/brightness"

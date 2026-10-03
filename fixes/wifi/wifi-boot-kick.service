@@ -1,0 +1,11 @@
+[Unit]
+Description=Retry WiFi power-on if connman lost the boot race against wlan_prov
+After=connman.service
+Wants=connman.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/wifi-boot-kick.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,141 @@
+#!/usr/bin/python3
+"""Jolla Tablet backlight remap helper.
+
+The i915 driver in the tablet's 3.10 kernel maps the raw backlight value
+0..255 onto a fixed band of the Bay Trail LPSS PWM duty cycle, about 20 % to
+64 % (on-time divisor 0xcd..0x5d). Even the lowest setting is far too bright
+for a dark room or a car at night. The panel itself follows the PWM all the
+way down (verified by eye, 2026-10-03).
+
+This helper takes the driver's mapping out of the path. At boot, before mce
+starts, tablet-backlight-mount bind-mounts a plain file over the backlight's
+"brightness" attribute, so mce writes its value there. This helper watches
+that file and writes the PWM control register itself, through the pwm-byt
+driver's debug attribute "test_write", with its own curve.
+
+The driver still writes its own level when the panel is switched on, so while
+the display is on the register is compared with the wanted value twice a
+second and corrected.
+
+Config: /etc/tablet-backlight.conf, key=value. Reload with SIGHUP.
+  floor    on-time divisor at the lowest setting (0xff = darkest)
+  ceiling  on-time divisor at the highest setting (0x5d = the driver's own
+           maximum; do not go lower than that without thinking about heat)
+  gamma    curve between them; 1.0 is linear in duty, 2.2 feels even to the eye
+"""
+import ctypes
+import ctypes.util
+import os
+import select
+import signal
+import sys
+
+WATCH = sys.argv[1] if len(sys.argv) > 1 else "/run/tablet-backlight/brightness"
+CONF = "/etc/tablet-backlight.conf"
+PWM = "/sys/bus/platform/devices/80860F09:00"
+RAW_MAX = 255
+IN_MODIFY, IN_CLOSE_WRITE = 0x2, 0x8
+
+cfg = {}
+reload_wanted = False
+
+
+def log(msg):
+    sys.stderr.write("tablet-backlight: %s\n" % msg)
+    sys.stderr.flush()
+
+
+def load_conf():
+    cfg.update(floor=0xff, ceiling=0x5d, gamma=2.2)
+    try:
+        for line in open(CONF):
+            line = line.split("#")[0].strip()
+            if "=" not in line:
+                continue
+            key, val = (s.strip() for s in line.split("=", 1))
+            if key in ("floor", "ceiling"):
+                cfg[key] = max(0, min(255, int(val, 0)))
+            elif key == "gamma":
+                cfg[key] = max(0.2, min(5.0, float(val)))
+    except OSError:
+        pass
+    if cfg["ceiling"] > cfg["floor"]:
+        cfg["ceiling"], cfg["floor"] = cfg["floor"], cfg["ceiling"]
+    log("floor=0x%02x ceiling=0x%02x gamma=%.2f" % (cfg["floor"], cfg["ceiling"], cfg["gamma"]))
+
+
+def divisor_for(raw):
+    """mce's raw value (0..255) -> PWM on-time divisor (255 = darkest)."""
+    if raw <= 1:
+        return cfg["floor"]
+    x = min(1.0, (raw - 1) / (RAW_MAX - 1))
+    return int(round(cfg["floor"] - (cfg["floor"] - cfg["ceiling"]) * x ** cfg["gamma"]))
+
+
+def read_raw():
+    """Last number in the watched file. mce may truncate or append; both work."""
+    try:
+        words = open(WATCH).read().split()
+        return int(words[-1]) if words else None
+    except (OSError, ValueError):
+        return None
+
+
+def read_reg():
+    try:
+        return int(open(PWM + "/ctl_reg").read().strip(), 16)
+    except (OSError, ValueError):
+        return None
+
+
+def apply(divisor):
+    reg = read_reg()
+    if reg is None or not reg & 0x80000000:
+        return          # PWM disabled: the panel is off, leave it to the driver
+    if reg & 0xff == divisor:
+        return
+    # keep the frequency bits, set the new on-time, set bit 30 so it latches
+    val = (reg & 0x3fffff00) | 0x80000000 | 0x40000000 | divisor
+    try:
+        with open(PWM + "/test_write", "w") as f:
+            f.write("0x%x\n" % val)
+    except OSError as e:
+        log("write failed: %s" % e)
+
+
+def on_hup(signum, frame):
+    global reload_wanted
+    reload_wanted = True
+
+
+def main():
+    global reload_wanted
+    load_conf()
+    signal.signal(signal.SIGHUP, on_hup)
+    libc = ctypes.CDLL(ctypes.util.find_library("c") or "libc.so.6", use_errno=True)
+    fd = libc.inotify_init()
+    if fd < 0 or libc.inotify_add_watch(fd, WATCH.encode(), IN_MODIFY | IN_CLOSE_WRITE) < 0:
+        log("inotify on %s failed, errno %d" % (WATCH, ctypes.get_errno()))
+        return 1
+    log("watching %s" % WATCH)
+    raw = read_raw()
+    while True:
+        if reload_wanted:
+            reload_wanted = False
+            load_conf()
+        if raw is not None:
+            apply(divisor_for(raw))
+        # display on: re-check twice a second, the driver rewrites the register
+        # when the panel is switched on. Display off (raw 0): just wait.
+        timeout = 0.5 if raw else 5.0
+        try:
+            ready, _, _ = select.select([fd], [], [], timeout)
+        except InterruptedError:
+            continue
+        if ready:
+            os.read(fd, 4096)
+        raw = read_raw()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
