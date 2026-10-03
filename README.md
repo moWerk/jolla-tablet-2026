@@ -82,9 +82,10 @@ script, unit and document in this repository, including this text. moWerk set
 the goals, described what the tablet did, decided what the repository should
 be, and judged every result on the device by eye and ear.
 
-Nobody has read the code. Instead every fix was installed on a real tablet,
-removed again, and installed from scratch, and each one was checked after a
-reboot. That was one tablet. What happens on yours is not known.
+Nobody has reviewed the code. moWerk has looked at parts of it, loosely by his
+own account. Instead every fix was installed on a real tablet, removed again,
+and installed from scratch, and each one was checked after a reboot. That was
+one tablet. What happens on yours is not known.
 
 Several first versions were wrong. One of them left the tablet hanging on the
 logo, another one made the display flicker. They were caught, by a test or by

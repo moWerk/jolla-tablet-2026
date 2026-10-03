@@ -27,6 +27,14 @@ the grading with another model before relying on it.
   the GPS library's source, the WiFi kick script, and the update path. They are
   marked `unassessed`, not vouched for.
 
+## After the grading
+
+2026-10-03, at publication: the owner says he has read parts of the code,
+loosely, and calls that cheap talk himself. It is a statement after the
+grading, about a part of the repository, with nothing in the record to show it.
+The rubric wants the complete work seen before publication for R. So R stays
+"no" and the grade does not change.
+
 ## Summary
 
 Retrieval found one transcript for this work on the grading machine and read
