@@ -86,8 +86,8 @@ paired from Settings on the first attempt.
 
 ## Good to know
 
-- Tested with one pair of earbuds, audio output only (A2DP). The headset
-  profile for calls shows as not available.
+- Tested with one pair of earbuds over A2DP. The tablet has no modem, so the
+  headset profile for calls does not apply.
 - Buttons: with music playing in the Media app, a tap on the earbuds paused
   it and another tap resumed it.
 - A message `bcm_bt_lpm ... Error evaluating UART port number` appears in the

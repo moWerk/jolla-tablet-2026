@@ -18,11 +18,6 @@ install -m 644 tablet-backlight.service /etc/systemd/system/tablet-backlight.ser
 systemctl daemon-reload
 systemctl enable tablet-backlight.service >/dev/null 2>&1
 
-# With automatic adjustment on, mce picks the level from its ambient light
-# table and the slider only spans a small part of the range. Switch it off.
-dbus-send --system --print-reply --dest=com.nokia.mce /com/nokia/mce/request \
-    com.nokia.mce.request.set_config objpath:/system/osso/dsm/display/als_autobrightness variant:boolean:false >/dev/null 2>&1
-
 echo "Installed. Reboot the tablet."
 echo "After the reboot the slider reaches from barely visible to brighter than before."
 echo "The low end is now very dark: if the screen looks off in daylight, raise the slider."

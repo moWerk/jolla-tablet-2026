@@ -31,7 +31,8 @@ and programs the PWM controller directly, through a debug attribute the PWM
 driver offers (`test_write`). The helper uses its own curve, from barely
 visible up to the driver's own maximum.
 
-Automatic brightness is switched off, because its table assumes the old range.
+Automatic brightness keeps working and gains the same range. mce's ambient
+light table feeds the new curve unchanged.
 
 **DPST is switched off too.** The tablet runs an Intel daemon from the Android
 side, `coreu`. It does DPST, a content-adaptive backlight: whenever the picture
@@ -50,8 +51,24 @@ stopped. Set `stop_dpst=0` in the config to leave it running.
 | 75 % | 34 % | 34 % |
 | highest | 40 % | 64 % |
 
-The "before" column is with automatic brightness on, in room light. Both
-columns are read from the PWM register, not estimated.
+The "before" column is the stock tablet with automatic brightness on, in room
+light. The "after" column is with automatic brightness off, where the slider
+sets the level directly. Both are read from the PWM register, not estimated.
+
+## Automatic brightness
+
+Recorded with the slider at 62 of 100, reading the light sensor next to what
+the backlight was set to:
+
+| light at the sensor | sensor reading | PWM duty |
+|---|---|---|
+| covered | 0 | darkest |
+| evening room | 3 to 5 | about 1 % |
+| brighter spot in the room | 22 to 27 | about 7 % |
+| flashlight | 900 to 6500 | 64 % |
+
+The slider shifts the whole response up or down. Judged by eye in evening
+light and with a flashlight. Not yet judged in daylight.
 
 ## What the backlight costs
 
@@ -125,5 +142,3 @@ Then reboot.
 - With `coreu` stopped there is no DPST. On the stock range DPST lowers the
   backlight for dark pictures; what that saved has not been measured. `coreu`
   also offers an HDCP interface, which nothing on Sailfish OS uses.
-- Automatic brightness is off with this fix. The light sensor does respond, so
-  an automatic mode built for the new range is possible. It is not done.

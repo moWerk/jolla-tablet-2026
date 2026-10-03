@@ -3,17 +3,6 @@
 Things that are known and not fixed. Each entry says what is measured and what
 is only suspected.
 
-## Automatic brightness
-
-The brightness fix switches automatic adjustment off, because its table
-assumes the stock range. The light sensor responds, so an automatic mode for
-the new range is possible. Not written.
-
-## Bluetooth is audio output only
-
-Music plays over A2DP, and headset buttons control the Media app. The headset
-profile for calls shows as not available.
-
 ## One WiFi failure is unexplained
 
 Once, after WiFi had been off overnight, it would not reconnect, and toggling
