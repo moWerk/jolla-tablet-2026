@@ -33,7 +33,7 @@ tablet. It does not mean the fix was tried on the reporter's tablet.
 | Thread | Reported | Here |
 |---|---|---|
 | [Cannot play mp4 videos on Tablet](https://forum.sailfishos.org/t/5260) (2021, on 4.0.1) | Gallery says "Video could not be loaded". It plays when Gallery is started from the terminal. | On 4.6.0.15 a camera recording plays in Gallery, opened the normal way. On first start Gallery asks for its permissions; until that is accepted nothing opens. |
-| [Jolla Tablet 4.6.0.13 Https Uri Handler error](https://forum.sailfishos.org/t/19922) (2024) | Streaming apps fail with `No URI handler implemented for "https"`. The thread finds the element `souphttpsrc` as root but not as the user. | Only half checked. In a plain shell `gst-inspect-1.0 souphttpsrc` finds the element as root and as the user. No streaming app was tried. |
+| [Jolla Tablet 4.6.0.13 Https Uri Handler error](https://forum.sailfishos.org/t/19922) (2024) | Streaming apps fail with `No URI handler implemented for "https"`. The thread finds the element `souphttpsrc` as root but not as the user. | On 4.6.0.15 the thread's own test works: as the normal user, `gst-launch-1.0 playbin uri=https://…` plays an https radio stream, and `gst-inspect-1.0 --uri-handlers` lists `souphttpsrc` for http and https. No streaming app was tried. If yours fails, compare that list as root and as the user. |
 
 ## Not looked at
 
