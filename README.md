@@ -15,7 +15,7 @@ kernel or the boot image. Every fix can be removed again.
 | WiFi is "on" after boot but finds no networks | connman powers WiFi while Android's `wlan_prov` still holds the chip in reset, and never retries | [fixes/wifi](fixes/wifi/) | proven by reboot |
 | Saved WiFi networks vanish after an update | the driver shows a wrong address first, and connman files networks under the address it sees first | [fixes/wifi](fixes/wifi/) | proven by reboot |
 | The screen is too bright at the lowest setting, and the slider barely does anything | the kernel squeezes the backlight into 20 % to 64 % duty, and automatic adjustment squeezes the slider further | [fixes/brightness](fixes/brightness/) | proven by reboot |
-| GPS never gets a fix once the tablet has slept | the location provider stamps injected time with the wrong clock, and the GPS daemon restarts every 54 s | [fixes/gps](fixes/gps/) | proven, files follow |
+| GPS never gets a fix once the tablet has slept | the location provider stamps injected time with the wrong clock, and the GPS daemon restarts every 54 s | [fixes/gps](fixes/gps/) | proven after standby |
 | Bluetooth never comes up | connman keeps it soft-blocked | [fixes/bluetooth](fixes/bluetooth/) | works |
 | The update to 4.6 seems impossible | the UI updater is a dead end on this device | [docs/update-to-4.6.0.15.md](docs/update-to-4.6.0.15.md) | done once, seven hops |
 
@@ -56,3 +56,8 @@ The fixes were worked out in October 2026 by moWerk together with Claude, an
 LLM, working directly on the tablet over ssh. The causes were measured on the
 device, not guessed: each folder says what was measured and how to check it
 yourself.
+
+## Licence
+
+GPL-2.0-or-later. Every script, unit and source file carries an SPDX header.
+The full text is in [LICENSE](LICENSE).

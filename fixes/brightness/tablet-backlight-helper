@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
 """Jolla Tablet backlight remap helper.
 
 The i915 driver in the tablet's 3.10 kernel maps the raw backlight value

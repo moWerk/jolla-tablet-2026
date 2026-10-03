@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
 # Jolla Tablet: retry the WiFi power-on that connman loses at boot.
 #
 # At boot connman powers WiFi while Android's wlan_prov still holds the chip in

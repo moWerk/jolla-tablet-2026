@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
 # Remove the Jolla Tablet WiFi fixes. Run as root:  devel-su sh uninstall.sh
 cd "$(dirname "$0")" && . ../../lib/common.sh
 need_root

@@ -28,10 +28,45 @@ keeps the real clock for its timers.
 Proven on the test tablet: a fix after more than ten minutes of standby, which
 is exactly the case that used to loop.
 
+## Install
+
+    devel-su sh install.sh
+
+No reboot is needed. The installer puts the library in `/usr/lib`, adds a
+drop-in for the provider's user service, and stops a running provider so the
+next start loads the library.
+
+The library has to carry the setuid bit and be owned by root. `geoclue-hybris`
+is itself setuid root, and in that mode the loader refuses to preload anything
+else. The bit does not make the library a program.
+
+## Check that it worked
+
+Open a maps app, then as root:
+
+    grep boottime /proc/$(pidof geoclue-hybris)/maps
+
+It must list `libgeoclue-boottime.so`. Then let the tablet sleep for ten
+minutes, wake it, and ask for a position again. Without the fix that never
+gives a position. Android's own log shows the difference:
+
+    /usr/libexec/droid-hybris/system/bin/logcat -d -b main -b radio -b system | grep GlEngine
+
+The GPS daemon logs to the radio buffer. Without `-b radio` the search is
+empty whether the daemon fails or not.
+
+## Remove
+
+    devel-su sh uninstall.sh
+
 ## Files
 
-The source of the library, its build script and the installer are being moved
-into this folder. Until they are here, this page only documents the cause.
+- `geoclue-boottime.c`: the library, about 90 lines. It links no libc and makes the
+  system call itself, so it builds on any x86 computer.
+- `build.sh`: builds it with `gcc -m32`.
+- `libgeoclue-boottime.so`: the build that runs on the test tablet, made with
+  GCC 16.2.1. Another compiler version gives a different file from the same
+  source. Build your own if you prefer.
 
 ## Good to know
 

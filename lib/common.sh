@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
 # Shared checks for the install scripts. Sourced, not run.
 # Every installer stops early with a plain message instead of half-installing.
 

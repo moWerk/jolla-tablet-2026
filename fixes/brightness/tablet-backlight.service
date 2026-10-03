@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 [Unit]
 Description=Jolla Tablet backlight remap below the i915 duty floor
 # No default dependencies: mce starts very early, before basic.target. With the

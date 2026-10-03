@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
 # Jolla Tablet full brightness range. Run on the tablet as root:  devel-su sh install.sh
 # Safe to run twice. Undo with uninstall.sh. Takes effect after a reboot.
 cd "$(dirname "$0")" && . ../../lib/common.sh

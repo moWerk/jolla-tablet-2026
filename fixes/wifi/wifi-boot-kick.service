@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 [Unit]
 Description=Retry WiFi power-on if connman lost the boot race against wlan_prov
 After=connman.service
