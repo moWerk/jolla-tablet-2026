@@ -13,12 +13,12 @@ kernel or the boot image. Every fix can be removed again.
 | Problem | Cause | Fix | State |
 |---|---|---|---|
 | WiFi is "on" after boot but finds no networks | connman powers WiFi while Android's `wlan_prov` still holds the chip in reset, and never retries | [fixes/wifi](fixes/wifi/) | proven by reboot |
-| Saved WiFi networks vanish after an update | the driver shows a wrong address first, and connman files networks under the address it sees first | [fixes/wifi](fixes/wifi/) | proven by reboot |
+| Saved WiFi networks ask for their password again | the adapter comes up with one of two addresses, and connman files networks under the one it sees | [fixes/wifi](fixes/wifi/) | header fix proven, reboot test pending |
 | The screen is too bright at the lowest setting, and the slider barely does anything | the kernel squeezes the backlight into 20 % to 64 % duty, and automatic adjustment squeezes the slider further | [fixes/brightness](fixes/brightness/) | proven by reboot |
 | The brightness jumps on every touch | Intel's `coreu` daemon re-sets the backlight ten times on every picture change (DPST) | [fixes/brightness](fixes/brightness/) | proven by trace and by eye |
-| Some boots have no WiFi and no GPS, or hang on the logo | the tablet's own zram units form an ordering loop, and systemd breaks it differently from boot to boot | [fixes/boot](fixes/boot/) | loop gone, one boot checked |
+| Some boots have no WiFi and no GPS, or hang on the logo; no swap | the tablet's own zram service is ordered into a loop, and systemd breaks it differently from boot to boot | [fixes/boot](fixes/boot/) | loop gone, swap works |
 | GPS never gets a fix once the tablet has slept | the location provider stamps injected time with the wrong clock, and the GPS daemon restarts every 54 s | [fixes/gps](fixes/gps/) | proven after standby |
-| Bluetooth never comes up, and then nothing can be paired | connman keeps it soft-blocked; the old kernel only answers a pairing once a key list has been loaded, and BlueZ loads none while nothing is paired | [fixes/bluetooth](fixes/bluetooth/) | paired and played audio |
+| Bluetooth never comes up, and then nothing can be paired | connman keeps it soft-blocked; the old kernel only answers a pairing once a key list has been loaded, and BlueZ loads none while nothing is paired | [fixes/bluetooth](fixes/bluetooth/) | paired from zero, audio plays |
 | The update to 4.6 seems impossible | the UI updater is a dead end on this device | [docs/update-to-4.6.0.15.md](docs/update-to-4.6.0.15.md) | done once, seven hops |
 
 Known and not fixed yet: [docs/open-issues.md](docs/open-issues.md).

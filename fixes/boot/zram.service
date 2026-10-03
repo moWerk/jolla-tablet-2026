@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 moWerk <mo@mowerk.net>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# Jolla Tablet: replaces /usr/lib/systemd/system/zram.service.
+# The stock unit is ordered After=local-fs.target. The swap devices it creates
+# must be ready before swap.target, and tmp.mount and mnt-obb.mount, which
+# local-fs.target waits for, start after swap.target. That is a loop.
+# This unit needs nothing but /sys and the root filesystem, so it is ordered
+# before the swap devices and after nothing.
+
+[Unit]
+Description=Enable ZRAM
+DefaultDependencies=no
+Conflicts=shutdown.target
+Before=dev-zram0.swap dev-zram1.swap dev-zram2.swap dev-zram3.swap swap.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/zramswapon
+RemainAfterExit=yes
+
+[Install]
+WantedBy=basic.target

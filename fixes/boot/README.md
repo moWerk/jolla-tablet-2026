@@ -27,12 +27,16 @@ Two boots three minutes apart, with identical configuration, gave one of each.
 
 ## Fix
 
-Take the zram units out of the boot. They never produced working swap anyway:
-on a good boot their jobs were the ones dropped.
+Correct the one unit that closes the loop. The stock `zram.service` is ordered
+after the local filesystems, and it has no reason to be: all it does is write
+a size into `/sys/block/zramN/disksize` and run `mkswap`. The replacement unit
+is ordered before the swap devices and after nothing.
 
     devel-su sh install.sh
 
-Then reboot.
+Then reboot. The loop is gone, and the tablet gets what the units were meant
+to provide in the first place: four compressed swap devices, together 20 % of
+the memory, about 390 MB.
 
 ## Check that it worked
 
@@ -40,8 +44,10 @@ After a boot, as root:
 
     systemctl --failed
     systemctl is-active droid-hal-init
+    cat /proc/swaps
 
-The first must list nothing, the second must say `active`.
+The first must list nothing, the second must say `active`, the third must list
+`/dev/zram0` to `/dev/zram3`.
 
 To see the loop itself on a tablet without the fix, read the journal within
 the first seconds of a boot:
@@ -54,12 +60,7 @@ A minute later those lines are gone. The journal holds one megabyte.
 
     devel-su sh uninstall.sh
 
-## Not done
-
-The proper fix is to correct `zram.service` so that it does not wait for the
-local filesystems. That would also give the tablet working compressed swap,
-which 2 GB of memory could use. It changes more than this does, and it has not
-been tried.
+## Not proven
 
 Whether this loop is the reason for the tablet's old habit of hanging on the
 logo is suspected, not proven.

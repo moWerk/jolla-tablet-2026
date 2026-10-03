@@ -114,6 +114,9 @@ Then reboot.
 
 ## Limits
 
+- The driver puts the backlight at its own minimum for a moment each time the
+  screen wakes, before the helper sets the real value. On the test tablet that
+  is not visible.
 - The fix relies on a debug attribute of the PWM driver. It is not an intended
   interface. It exists on the tablet's 3.10 kernel.
 - The helper is a Python script and uses about 8 MB of memory.

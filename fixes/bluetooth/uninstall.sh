@@ -7,6 +7,8 @@ cd "$(dirname "$0")" && . ../../lib/common.sh
 need_root
 rm -f /usr/local/bin/tablet-bt-first-pairing /etc/systemd/system/tablet-bt-first-pairing.service \
       /etc/udev/rules.d/81-tablet-bt-first-pairing.rules
+rm -f /etc/systemd/system/bluetooth.service.d/tablet-uinput.conf
+rmdir /etc/systemd/system/bluetooth.service.d 2>/dev/null
 systemctl daemon-reload
 /usr/sbin/udevadm control --reload
 echo "Removed. Bluetooth stays switched on; devices already paired keep working."
