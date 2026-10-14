@@ -8,7 +8,8 @@ need_root
 systemctl disable wifi-boot-kick.service >/dev/null 2>&1
 rm -f /usr/local/bin/wifi-boot-kick.sh /etc/systemd/system/wifi-boot-kick.service \
       /usr/local/bin/wifi-mirror-saved-networks.sh /etc/systemd/system/connman.service.d/tablet-wifi-mirror.conf \
-      /etc/udev/rules.d/80-wlan0-real-mac.rules
+      /etc/udev/rules.d/80-wlan0-real-mac.rules /run/wifi-mirror.status /run/wifi-boot-kick.status
+rm -rf /var/lib/tablet-wifi
 rmdir /etc/systemd/system/connman.service.d 2>/dev/null
 systemctl daemon-reload
 /usr/sbin/udevadm control --reload
