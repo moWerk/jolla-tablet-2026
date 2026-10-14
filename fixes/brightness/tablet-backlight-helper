@@ -15,9 +15,14 @@ starts, tablet-backlight-mount bind-mounts a plain file over the backlight's
 that file and writes the PWM control register itself, through the pwm-byt
 driver's debug attribute "test_write", with its own curve.
 
-The driver still writes its own level when the panel is switched on, so while
-the display is on the register is compared with the wanted value twice a
-second and corrected.
+The driver still writes its own level, its minimum of 20 % duty, when the
+panel is switched on and again when it is switched off. Against a dark setting
+that shows as a flash, about 30 ms on wake and 75 ms on blank (measured
+2026-10-14). So the register is watched every millisecond for a short window
+at both moments, and corrected. The wake window opens on the kernel's DRM
+"change" uevent, which comes about 450 ms before the driver turns the PWM on.
+The blank window opens when mce writes 0. Outside those windows the register
+is compared twice a second while the display is on.
 
 DPST has to be off. Intel's Android-side daemon "coreu" runs DPST, the
 content-adaptive backlight: on every change of the picture it makes the driver
@@ -37,6 +42,7 @@ import ctypes.util
 import os
 import select
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -46,6 +52,9 @@ CONF = "/etc/tablet-backlight.conf"
 PWM = "/sys/bus/platform/devices/80860F09:00"
 RAW_MAX = 255
 IN_MODIFY, IN_CLOSE_WRITE = 0x2, 0x8
+NETLINK_KOBJECT_UEVENT = 15
+WAKE_WINDOW = 1.5     # s of 1 ms watching after a DRM uevent
+BLANK_WINDOW = 1.0    # s of 1 ms watching after mce wrote 0, or until the PWM is off
 
 cfg = {}
 reload_wanted = False
@@ -120,15 +129,18 @@ def stop_dpst():
         log("could not check coreu: %s" % e)
 
 
-def apply(divisor):
+def apply(divisor, expected=False):
+    """Returns False when the PWM is disabled."""
     reg = read_reg()
     if reg is None or not reg & 0x80000000:
-        return          # PWM disabled: the panel is off, leave it to the driver
+        return False    # PWM disabled: the panel is off, leave it to the driver
     if reg & 0xff == divisor:
-        return
-    # Somebody else changed the register. Besides the driver's replay on
-    # unblank, the usual somebody is DPST.
-    stop_dpst()
+        return True
+    # Somebody else changed the register. Inside a wake or blank window that is
+    # the driver; otherwise the usual somebody is DPST. stop_dpst() blocks for
+    # milliseconds, so it stays out of the windows.
+    if not expected:
+        stop_dpst()
     # keep the frequency bits, set the new on-time, set bit 30 so it latches
     val = (reg & 0x3fffff00) | 0x80000000 | 0x40000000 | divisor
     try:
@@ -136,6 +148,33 @@ def apply(divisor):
             f.write("0x%x\n" % val)
     except OSError as e:
         log("write failed: %s" % e)
+    return True
+
+
+def open_uevents():
+    """Kernel uevents; None if the socket cannot be had (then no wake window)."""
+    try:
+        s = socket.socket(socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_KOBJECT_UEVENT)
+        s.bind((0, 1))
+        s.setblocking(False)
+        return s
+    except OSError as e:
+        log("no uevent socket, wake flash stays: %s" % e)
+        return None
+
+
+def drm_change(sock):
+    """Drain the socket; True if one of the events was a DRM change."""
+    hit = False
+    while True:
+        try:
+            msg = sock.recv(8192)
+        except (BlockingIOError, InterruptedError):
+            return hit
+        except OSError:
+            return hit
+        if msg.startswith(b"change@") and b"SUBSYSTEM=drm" in msg:
+            hit = True
 
 
 def on_hup(signum, frame):
@@ -153,28 +192,44 @@ def main():
         log("inotify on %s failed, errno %d" % (WATCH, ctypes.get_errno()))
         return 1
     log("watching %s" % WATCH)
+    uev = open_uevents()
+    fds = [fd] + ([uev] if uev else [])
     started = time.monotonic()
     raw = read_raw()
+    window_until = window_start = 0.0
+    blanking = False
     while True:
+        now = time.monotonic()
+        in_window = now < window_until
         # coreu starts later in the boot than this helper. Look for it actively
         # for the first three minutes; after that a register mismatch triggers it.
-        if time.monotonic() - started < 180:
+        if now - started < 180 and not in_window:
             stop_dpst()
         if reload_wanted:
             reload_wanted = False
             load_conf()
         if raw is not None:
-            apply(divisor_for(raw))
-        # display on: re-check twice a second, the driver rewrites the register
-        # when the panel is switched on. Display off (raw 0): just wait.
-        timeout = 0.5 if raw else 5.0
+            pwm_on = apply(divisor_for(raw), expected=in_window)
+            # blank window: done once the driver has turned the PWM off
+            if in_window and blanking and not pwm_on and now - window_start > 0.2:
+                window_until = 0.0
+                in_window = False
+        # window: every millisecond. Display on: twice a second, the driver
+        # rewrites the register now and then. Display off (raw 0): just wait.
+        timeout = 0.001 if in_window else (0.5 if raw else 5.0)
         try:
-            ready, _, _ = select.select([fd], [], [], timeout)
+            ready, _, _ = select.select(fds, [], [], timeout)
         except InterruptedError:
             continue
-        if ready:
+        if uev in ready and drm_change(uev) and not raw:
+            window_start, window_until = time.monotonic(), time.monotonic() + WAKE_WINDOW
+            blanking = False
+        if fd in ready:
             os.read(fd, 4096)
-        raw = read_raw()
+        old, raw = raw, read_raw()
+        if old and raw == 0:
+            window_start, window_until = time.monotonic(), time.monotonic() + BLANK_WINDOW
+            blanking = True
 
 
 if __name__ == "__main__":

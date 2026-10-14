@@ -131,9 +131,14 @@ Then reboot.
 
 ## Limits
 
-- The driver puts the backlight at its own minimum for a moment each time the
-  screen wakes, before the helper sets the real value. On the test tablet that
-  is not visible.
+- The driver puts the backlight at its own minimum, 20 % duty, when the screen
+  goes off and twice when it wakes. Against a dark setting that is a flash.
+  Until 2026-10-14 the helper let it stand for about 75 ms at screen off and
+  30 ms (once 730 ms) on wake; a forum user and the owner both saw it. The
+  helper now watches the register every millisecond at those moments: the
+  screen-off flash is gone, and each wake flash lasts at most 3 ms (five register
+  traces on the test tablet; whether 3 ms is visible is for the eye to judge). The wake window opens on the kernel's DRM
+  uevent, which comes about 450 ms before the driver turns the backlight on.
 - The fix relies on a debug attribute of the PWM driver. It is not an intended
   interface. It exists on the tablet's 3.10 kernel.
 - The helper is a Python script and uses about 8 MB of memory.
