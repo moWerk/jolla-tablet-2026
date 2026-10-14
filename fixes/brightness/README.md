@@ -131,14 +131,18 @@ Then reboot.
 
 ## Limits
 
-- The driver puts the backlight at its own minimum, 20 % duty, when the screen
-  goes off and twice when it wakes. Against a dark setting that is a flash.
-  Until 2026-10-14 the helper let it stand for about 75 ms at screen off and
-  30 ms (once 730 ms) on wake; a forum user and the owner both saw it. The
-  helper now watches the register every millisecond at those moments: the
-  screen-off flash is gone, and each wake flash lasts at most 3 ms (five register
-  traces on the test tablet; whether 3 ms is visible is for the eye to judge). The wake window opens on the kernel's DRM
-  uevent, which comes about 450 ms before the driver turns the backlight on.
+- The screen used to flicker when it went off. Two causes, both found on
+  2026-10-14 from a forum report and the owner's eye. First, the driver puts
+  the backlight at its own minimum, 20 % duty, when the screen goes off and
+  twice when it wakes; the helper left that for 30 to 75 ms. Second, after
+  mce's fade reached 0 the backlight stayed on at the floor for another 95 to
+  125 ms while the panel shut down, and the panel showed a few frames of
+  half-faded picture in that time: a triple flicker in about 2 of 5 offs. The
+  helper now watches the register every millisecond at those moments, and
+  switches the backlight off as soon as mce reaches 0. The owner toggled the
+  screen about 15 times at different brightness afterwards: no flicker, and
+  a smooth fade-out every time. The wake still has two 20 % moments of at most
+  3 ms each; they could not be seen.
 - The fix relies on a debug attribute of the PWM driver. It is not an intended
   interface. It exists on the tablet's 3.10 kernel.
 - The helper is a Python script and uses about 8 MB of memory.

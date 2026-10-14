@@ -21,8 +21,10 @@ that shows as a flash, about 30 ms on wake and 75 ms on blank (measured
 2026-10-14). So the register is watched every millisecond for a short window
 at both moments, and corrected. The wake window opens on the kernel's DRM
 "change" uevent, which comes about 450 ms before the driver turns the PWM on.
-The blank window opens when mce writes 0. Outside those windows the register
-is compared twice a second while the display is on.
+The blank window opens when mce writes 0; in it the backlight is switched
+off at once rather than held at the floor while the panel shuts down.
+Outside those windows the register is compared twice a second while the
+display is on.
 
 DPST has to be off. Intel's Android-side daemon "coreu" runs DPST, the
 content-adaptive backlight: on every change of the picture it makes the driver
@@ -129,11 +131,21 @@ def stop_dpst():
         log("could not check coreu: %s" % e)
 
 
-def apply(divisor, expected=False):
-    """Returns False when the PWM is disabled."""
+def apply(divisor, expected=False, off=False):
+    """Returns False when the PWM is disabled. off: switch it off now."""
     reg = read_reg()
     if reg is None or not reg & 0x80000000:
         return False    # PWM disabled: the panel is off, leave it to the driver
+    if off:
+        # Screen going off and mce at 0: the backlight goes dark now instead of
+        # staying at the floor for the ~100 ms the panel takes to shut down,
+        # during which it shows a few frames of half-faded content.
+        try:
+            with open(PWM + "/test_write", "w") as f:
+                f.write("0x%x\n" % ((reg & 0x3fffffff) | 0x40000000))
+        except OSError as e:
+            log("write failed: %s" % e)
+        return False
     if reg & 0xff == divisor:
         return True
     # Somebody else changed the register. Inside a wake or blank window that is
@@ -209,9 +221,11 @@ def main():
             reload_wanted = False
             load_conf()
         if raw is not None:
-            pwm_on = apply(divisor_for(raw), expected=in_window)
-            # blank window: done once the driver has turned the PWM off
-            if in_window and blanking and not pwm_on and now - window_start > 0.2:
+            pwm_on = apply(divisor_for(raw), expected=in_window,
+                           off=in_window and blanking and raw == 0)
+            # blank window: the driver turns the PWM on twice more, up to
+            # ~130 ms after mce's 0, before it turns it off for good
+            if in_window and blanking and not pwm_on and now - window_start > 0.4:
                 window_until = 0.0
                 in_window = False
         # window: every millisecond. Display on: twice a second, the driver
